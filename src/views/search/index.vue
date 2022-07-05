@@ -2,7 +2,7 @@
  * @Author: zhang
  * @Date: 2022-06-08 09:49:58
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2022-06-23 11:23:13
+ * @LastEditTime: 2022-06-24 09:38:07
  * @Descripttion: 
 -->
 <template>
@@ -36,7 +36,12 @@
     <!-- 历史记录 -->
     <div class="history-box">
       <div class="lis">历史：</div>
-      <div class="lis" v-for="(item, index) in historySearch" :key="index">
+      <div
+        class="lis"
+        v-for="(item, index) in historySearch"
+        :key="index"
+        @click="onSearch(item)"
+      >
         {{ item }}
       </div>
     </div>
@@ -60,10 +65,11 @@ import { reactive, ref } from "@vue/reactivity";
 import { useRouter } from "vue-router";
 import { useStore } from "vuex";
 import { Toast } from "vant";
-import { searchSuggest } from "../../utils/search";
+import { searchSuggest, search } from "../../utils/search";
+import { watch } from "@vue/runtime-core";
 export default {
   components: {
-    [Toast.name]: Toast,
+    Toast,
   },
   setup() {
     const router = useRouter();
@@ -80,10 +86,24 @@ export default {
     });
     const value = ref("");
     /* 搜索 */
+    // watch(
+    //   () => store.state.historySearch,
+    //   (newValue) => {
+    //     historySearch = newValue;
+    //   }
+    // );
     const onSearch = (val) => {
-      if (val.trim().length > 0) {
+      let values = val.trim();
+      if (values.length > 0) {
         store.commit("AddHistorySearch", val);
         searchSongs.value.length = 0;
+        search({ keywords: values })
+          .then((res) => {
+            console.log(res.data);
+          })
+          .catch((err) => {
+            Toast.fail("服务器错误！");
+          });
       } else {
         Toast.fail("请输入文字信息！");
       }
@@ -91,15 +111,21 @@ export default {
     };
     /* 值改变 */
     const changeValue = (val) => {
-      let value = val.trim();
-      if (value.length > 0) {
+      searchSongs.value.length = 0;
+      let values = val.trim();
+      if (values.length > 0) {
         data.show = true;
-        searchSuggest({ keywords: value }).then((res) => {
-          // console.log(res.data.result);
-          res.data.result.songs.forEach((item) => {
-            searchSongs.value.push(item.name);
+        searchSuggest({ keywords: values })
+          .then((res) => {
+            if (res.data.result.songs !== undefined) {
+              res.data.result.songs.forEach((item) => {
+                searchSongs.value.push(item.name);
+              });
+            }
+          })
+          .catch((err) => {
+            Toast.fail("服务器错误！");
           });
-        });
       } else {
         data.show = false;
       }
@@ -188,7 +214,6 @@ export default {
     position: absolute;
     top: 1.1rem;
     left: 0px;
-    height: 300px;
     background: #fff;
     .serach-tip-lis {
       display: flex;

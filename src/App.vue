@@ -2,7 +2,7 @@
  * @Author: zhang
  * @Date: 2022-06-02 16:49:48
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2022-06-23 10:19:03
+ * @LastEditTime: 2022-06-28 08:59:19
  * @Descripttion: 
 -->
 <template>
@@ -48,11 +48,16 @@ export default {
           if (newValue) {
             audio.value.play();
             let player = audio.value.play();
+            player
+              .then((res) => {
+                console.log(res);
+              })
+              .catch((err) => {
+                console.log(err);
+              });
             player.catch(async (err) => {
-              setTimeout(() => {
-                store.state.isPlay = false;
-                store.dispatch("nex");
-              }, 1000);
+              store.state.isPlay = false;
+              store.dispatch("nex");
             });
           } else {
             audio.value.pause();
